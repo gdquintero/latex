@@ -1,0 +1,729 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{hyperref}	
+\usepackage{xcolor}	
+\usepackage{graphicx}
+\usepackage{multirow}
+
+\setlength{\textwidth}     {16.0cm}
+\setlength{\textheight}    {21.0cm}
+\setlength{\evensidemargin}{ 0.0cm}
+\setlength{\oddsidemargin} { 0.0cm}
+\setlength{\topmargin}     {-0.5cm}
+\setlength{\baselineskip}  { 0.7cm}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\xkjtrial}{x^{k,j}_{\mathrm{trial}}}
+\newcommand{\minimize}{\mathop{\text{Minimize}}}
+\newcommand{\flow}{f_{\mathrm{low}}}
+\newcommand{\simplex}{\textstyle\sum}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{assumption}{Assumption}
+\renewcommand\theassumption{A\arabic{assumption}}
+
+% Show line numbers
+\usepackage[mathlines]{lineno}
+\renewcommand\linenumberfont{\normalfont\small\color{gray}}
+\linenumbers
+
+% Show labels
+\usepackage{showlabels}
+
+
+\begin{document}
+
+\title{A Quasi-Newton-like regularized approach\\ to the order-value optimization problem\thanks{This work has been funded by the Vice-Rectorate for Research, Outreach and Social Projection of the University of the Atlantic through the 2022 Internal Call for Proposals to Strengthen Research Groups with Tools for Creation, Innovation, and Research.}}
+
+\author{
+    Carlos Araujo\thanks{Mathematics Program, Faculty of Basic Sciences, University of Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: carlosaraujo@uniatlantico.edu.co}
+    \and
+    Miguel Caro\thanks{Mathematics Program, Faculty of Basic Sciences, University of Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: miguelcaro@uniatlantico.edu.co}
+    \and
+    Gustavo Quintero\thanks{Mathematics Program, Faculty of Basic Sciences, University of Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: gdquintero@uniatlantico.edu.co}
+}
+
+% \date{June 18, 2025\footnote{Revision made on \today.}}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+Minimization of the order-value function is part of a large family of problems involving functions whose value is calculated by sorting values from a set or subset of other functions. The order-value function has as particular cases the minimum and maximum functions of a set of functions and is well suited for applications involving robust estimation. In this paper, a first order method with quadratic regularization to solve the problem of minimizing the order-value function is proposed. An optimality condition for the problem and theoretical results of iteration complexity and evaluation complexity for the proposed method are presented. The applicability of the problem and method to parameter estimation problems with outliers is illustrated.\\
+
+\noindent
+\textbf{Keywords:} Order-value optimization, regularized models, complexity, algorithms, applications.\\
+
+\noindent
+\textbf{Mathematics Subject Classification:} 90C30, 65K05, 49M37, 90C60, 68Q25.\\
+\end{abstract}
+
+\section{Introduction} \label{sec:intro}
+
+Generalized order-value functions, systematized in~\cite{mtop}, are functions whose value~$f(x)$, for a given $x$ in the domain, depends on order relations on a set of the form $\{f_i(x)\}_{i \in I}$. One such function is the order-value function of order~$p$ defined in~\cite{dunder1,dunder2}. Given~$m$ functions $f_1,\dots,f_m$, the value of the $p$th order-value function $f$ at a point $x$ in the domain corresponds to the value at the $p$th position when the values $f_1(x), f_2(x), \dots, f_m(x)$ are ordered from smallest to largest. It is important to note that, even if all $f_i$ are differentiable, $f$ may be non-differentiable.
+
+For the particular choices $p=1$ and $p=m$, we have that $f(x)=\min\{ f_1(x), f_2(x), \dots, f_m(x)\}$ and $f(x)=\max\{ f_1(x), f_2(x), \dots, f_m(x)\}$, respectively. If $x$ is a vector of portfolio positions and $f_i(x)$ represents the expected loss for choosing $x$ under scenario $i$, then the order-value function is the discrete value-at-risk (VaR) function, which is widely used in risk analysis; see~\cite{jorion}. If each function $f_i$ represents the precision with which a certain model that depends on unknown parameters $x$ fits the $i$th observation, minimizing the $p$th order-value function is equivalent to fitting the model's $x$ parameters by discarding the poorest fitted $m-p$ observations. In general, the order-value function is well suited for applications involving robust estimation, i.e., estimation techniques that are not affected by slight deviations in the data or from the idealized premises.
+
+In~\cite{dunder1}, it was introduced a steepest descent type method for the minimization of the $p$th order-value function restricted to a closed and convex set. Convergence to points that satisfy a weak optimality conditions was proven. In~\cite{dunder2}, stronger optimality conditions and a nonlinear programming reformulation with equilibrium constraints of the problem were given. In~\cite{yano1}, it was introduced a quasi-Newton method that generalizes the method proposed in~\cite{dunder1}. In~\cite{salva}, it was proposed a global optimization strategy that combines multistart and a tunneling approach. In~\cite{jiang}, it was proved that the minimization of the order-value function is an NP-hard problem in the strong sense in the case that constraints are given by a polytope.
+
+In 2006, \cite{nesterov} introduced the idea of computational complexity in continuous optimization. Since then, algorithms with complexity results have been developed for a wide variety of continuous optimization problems. See, for example, \cite{bgmst2,bgmst1}. In 2022, the first book~\cite{cogtbook} specifically dedicated to the subject was released. This paper contributes to this line of research by proposing a method that possesses complexity results for the problem of minimizing the order-value function with box constraints.
+
+The rest of this paper is organized as follows. In Section~\ref{sec:method}, the problem of minimizing the order-value function and the proposed regularized method are defined. Section~\ref{sec:conv} is devoted to the definition of an adequate optimality condition and to prove the well-definiteness, convergence, and complexity results of the method. Illustrative numerical experiments are given in Section~\ref{sec:numexp}. Conclusions and final remarks are given in the last section.\\
+
+\noindent
+\textbf{Notation.} The symbol $\| \cdot \|$ denotes the Euclidean norm. For $i=1,\dots,n$, $e^i \in \R^n$ denotes the $i$th column of the identity matrix in $\R^{n \times n}$.
+
+\section{Quasi-Newton regularized second-order method} \label{sec:method}
+
+Let $f_i : \mathbb{R}^n \to \mathbb{R}$, for $i = 1, \ldots, m$, be a 
+family of real-valued functions. For a fixed integer $p \in \{1, 2, 
+\ldots, m\}$, the \textit{order-value function of order $p$} is the 
+mapping $f : \mathbb{R}^n \to \mathbb{R}$ defined by
+\begin{equation}
+    f(x) = f_{i_p(x)}(x), \label{ovo-function}
+\end{equation}
+where $\{i_1(x), i_2(x), \ldots, i_m(x)\}$ is a permutation of 
+$\{1, 2, \ldots, m\}$ satisfying
+\begin{equation}
+    f_{i_1(x)}(x) \leq f_{i_2(x)}(x) \leq \cdots \leq f_{i_m(x)}(x).
+    \label{fi-sort}
+\end{equation}
+That is, $f(x)$ selects the $p$-th smallest value among 
+$f_1(x), \ldots, f_m(x)$ at each point $x$. The boundary cases 
+$p = 1$ and $p = m$ recover the classical minimum and maximum 
+functions, respectively. For intermediate values of $p$, the function 
+$f$ acts as a \textit{robust order statistic}: rather than aggregating 
+all component values, it focuses on a single rank position in the 
+sorted sequence, which makes it naturally resilient to extreme values 
+in the collection $\{f_i(x)\}$.
+
+If all the functions $f_i$ are continuous, then $f$ is also continuous, 
+since it results from selecting the $p$-th smallest value among a 
+continuous family. However, the differentiability of each $f_i$ does 
+not guarantee the differentiability of $f$. Indeed, the active index 
+$i_p(x)$ may change discontinuously as $x$ varies, producing kinks in 
+$f$ even when all component functions are smooth. More precisely, 
+non-differentiability of $f$ at a point $x$ occurs precisely when there 
+exist indices $i \neq j$ such that $f_i(x) = f_j(x) = f(x)$, i.e., 
+when the $p$-th order statistic is not uniquely attained. At such 
+points, the subdifferential of $f$ contains contributions from multiple 
+active components simultaneously, which complicates the construction of 
+descent directions via classical gradient-based schemes.
+
+This intrinsic nonsmoothness is not merely a technical inconvenience: 
+it reflects the combinatorial nature of the rank-selection operator 
+underlying $f$, and it is precisely what motivates the use of 
+set-valued active-index strategies. The method proposed in this work 
+addresses this challenge by incorporating all component functions 
+whose values lie within a tolerance band around $f(x)$ into the 
+local model, thereby avoiding the need to commit to a single active 
+index and ensuring stable descent even near non-differentiable points.
+
+The optimization problem we address in this work consists in minimizing 
+the $p$-th order-value function over a box-constrained feasible region. 
+Formally, we consider
+\begin{equation}
+    \minimize_{x \in \Omega} f(x), \label{ovo-problem}
+\end{equation}
+where $\Omega := \{x \in \mathbb{R}^n \mid \ell \leq x \leq u\}$, with 
+vectors $\ell, u \in \mathbb{R}^n$ satisfying $\ell_i < u_i$ for each 
+$i = 1, \ldots, n$. Box constraints are natural in many parameter 
+estimation applications, where the unknown parameters are known to lie 
+within physically or statistically meaningful bounds.
+
+A central ingredient of our approach is the identification, at each 
+iterate $x^k$, of the component functions that are most relevant to 
+the current value of $f$. Specifically, for any $\delta > 0$ and 
+$x \in \Omega$, we define the \textit{active index set}
+\begin{equation}
+    I_\delta(x) := \{i \in \{1, \ldots, m\} \mid 
+    f(x) - \delta \leq f_i(x) \leq f(x) + \delta\}. \label{idelta}
+\end{equation}
+The parameter $\delta > 0$ controls the width of the band around the 
+current order-value $f(x)$ within which component functions are 
+considered active. When $\delta$ is small, $I_\delta(x)$ captures only 
+those indices whose function values are nearly tied at the $p$-th 
+position, which corresponds to the neighborhood of non-differentiability 
+of $f$. As $\delta$ increases, more components are incorporated into 
+the model, providing a more conservative but potentially more stable 
+approximation. In the limit $\delta \to 0$, the set $I_\delta(x)$ 
+reduces to the set of indices that exactly attain the order-value, 
+i.e.,
+\[
+I_\delta(x) \to I_0(x) = \{i \mid f_i(x) = f(x)\}
+\]
+Based on the active index set $I_\delta(\bar{x})$, we construct a 
+local model of $f$ around a reference point $\bar{x} \in \Omega$ that 
+incorporates second-order information through a symmetric positive 
+semidefinite matrix $B \in \mathbb{R}^{n \times n}$. The role of $B$ 
+is to approximate the curvature of the active component functions, 
+providing a more accurate local representation of $f$ than a purely 
+linear model would allow. In a quasi-Newton framework, $B$ is 
+iteratively updated to capture curvature information from successive 
+gradient evaluations, without requiring the explicit computation of 
+second derivatives.
+
+Formally, for given $\delta > 0$, $\sigma > 0$, a symmetric positive 
+semidefinite matrix $B \in \mathbb{R}^{n \times n}$, and a reference 
+point $\bar{x} \in \Omega$, the regularized second-order model is 
+defined as
+\begin{equation}
+    \Psi(x; \bar{x}, \delta, \sigma) = 
+    \max_{i \in I_\delta(\bar{x})} 
+    \left\{ \nabla f_i(\bar{x})^T(x - \bar{x}) \right\} 
+    + \frac{1}{2} \left[ (x - \bar{x})^T B (x - \bar{x}) 
+    + \sigma \|x - \bar{x}\|^2 \right]. \label{model}
+\end{equation}
+The model $\Psi$ has a natural decomposition into two terms. The first 
+term is a piecewise-linear convex function that captures the worst-case 
+first-order behavior of $f$ among the active components, reflecting the 
+nonsmooth structure of the order-value function. The second term 
+combines a quasi-Newton curvature approximation $(x-\bar{x})^T B 
+(x-\bar{x})$ with a Tikhonov-type quadratic regularization 
+$\sigma\|x - \bar{x}\|^2$, which together ensure that the model is 
+strongly convex and that the subproblem has a unique minimizer. Note 
+that when $B = 0$, the model reduces to the purely first-order 
+regularized model studied in \cite{AlvarezBirgin2025}, so the present 
+work strictly generalizes that approach.
+
+The scalar $\sigma > 0$ plays a dual role: it acts as a regularization 
+parameter that controls the step size, and it serves as a safeguard 
+against the curvature matrix $B$ being insufficiently positive definite. 
+In particular, even if $B$ is only positive semidefinite, the presence 
+of $\sigma \|x - \bar{x}\|^2$ guarantees that $\Psi$ is strongly 
+convex, and hence that subproblem \eqref{ovo-subpro} always admits a 
+unique solution. This model will be minimized at each iteration to 
+determine the next candidate point, as described in the algorithm 
+below.\\
+
+\noindent
+\textbf{Algorithm~\ref{sec:method}.1:} Let $\delta > 0$, 
+$\sigma_{\min} > 0$, $M > 0$, $\alpha \in (0,1)$, $\gamma > 1$, and 
+$x^0 \in \Omega$ be given. Initialize $k \leftarrow 0$.
+
+\begin{description}
+
+\item[Step~1.] Initialize $j \leftarrow 0$ and 
+$\sigma_{k,j} = \sigma_{\min}$.
+
+\item[Step~2.] Select a symmetric positive semidefinite matrix 
+$B_{k,j} \in \mathbb{R}^{n \times n}$ with $\|B_{k,j}\| \leq M$, 
+and compute $\xkjtrial$ as a global minimizer of
+    \begin{equation} \label{ovo-subpro}
+    \minimize_{x \in \Omega}\, \Psi(x; x^k, \delta, \sigma_{k,j}).
+    \end{equation}
+
+\item[Step~3.] If the condition
+    \begin{equation} \label{ovo-armijo}
+    f(x) \leq f(x^k) - \alpha \|x - x^k\|^2
+    \end{equation}
+with $x \equiv \xkjtrial$ does not hold, set 
+$\sigma_{k,j+1} = \gamma \sigma_{k,j}$, update $j \leftarrow j + 1$, 
+and go to Step~2.
+
+\item[Step~4.] Define $x^{k+1} = \xkjtrial$, $\sigma_k = \sigma_{k,j}$, 
+$j_k = j$, update $k \leftarrow k+1$, and go to Step~1.
+
+\end{description}
+
+The five scalar parameters governing the algorithm have distinct 
+roles. The parameter $\delta > 0$ controls the width of the active 
+index band as defined in \eqref{idelta}; a larger $\delta$ incorporates 
+more component functions into the model, while a smaller $\delta$ 
+focuses exclusively on those nearest to the current order statistic. 
+The parameter $\sigma_{\min} > 0$ sets the initial regularization 
+level at each outer iteration; $M > 0$ bounds the norm of the 
+curvature matrices $B_{k,j}$, preventing the second-order information 
+from dominating the model excessively. The acceptance parameter 
+$\alpha \in (0,1)$ determines how much descent is required from each 
+trial point, and $\gamma > 1$ controls how aggressively the 
+regularization is increased when the trial point is rejected. The 
+freedom in choosing $B_{k,j}$ at each inner iteration allows the 
+method to accommodate different quasi-Newton update strategies, such 
+as BFGS or SR1. In particular, the degenerate case $B_{k,j} = 0$ 
+for all $k, j$ recovers the first-order regularized method of 
+\cite{AlvarezBirgin2025}.
+
+The theoretical requirements on $\xkjtrial$ are mild and easily 
+satisfiable in practice. Specifically, the theory requires 
+$\xkjtrial$ to be a stationary point of \eqref{ovo-subpro} such that 
+$\Psi(\xkjtrial; x^k, \delta, \sigma_{k,j}) \leq 0$. Since 
+$\Psi(x^k; x^k, \delta, \sigma_{k,j}) = 0$, any descent method 
+initialized at $x^k$ will naturally produce iterates satisfying this 
+requirement, as the objective value at the starting point is already 
+zero. Furthermore, the subproblem \eqref{ovo-subpro} is convex over 
+the box-constrained domain $\Omega$: the model $\Psi$ combines a 
+piecewise-linear convex term with a strongly convex quadratic, so 
+every stationary point is a global minimizer and the solution is 
+unique. Consequently, standard convex optimization solvers can be 
+applied directly to \eqref{ovo-subpro}, and the theoretical 
+requirement on $\xkjtrial$ reduces simply to finding this unique 
+global minimizer, whose existence is always guaranteed by the 
+compactness of $\Omega$ and the coercivity of $\Psi$.
+
+% \noindent
+% \textbf{Algorithm~\ref{sec:method}.1:} Let $\delta>0$, $\sigma_{\min}>0$, $M>0$, $\alpha\in(0,1)$, $\gamma>1$, and $x^0 \in \Omega$ be given. Initialize $k\leftarrow 0$.
+% \begin{description}
+% \item[Step~1.] Initialize $j\leftarrow 0$ and $\sigma_{k,j} = \sigma_{\min}$.
+% \item[Step~2.] Choose $B_{k,j}\in\R^{n\times n}$ a symmetric and positive semi-definite matrix such that $\|B_{k,j}\|\leq M$, and compute $\xkjtrial$ as a solution to the problem
+%     \begin{equation} \label{ovo-subpro}
+%     \minimize_{x\in\Omega}\, \Psi(x;x^k,\delta,\sigma_{k,j})
+%     \end{equation} 
+% \item[Step~3.] Consider condition
+%     \begin{equation} \label{ovo-armijo}
+%     f(x) \leq f(x^k) - \alpha \|x - x^k\|^2.
+%     \end{equation}
+%     If (\ref{ovo-armijo}) with $x \equiv \xkjtrial$ does not hold, then set $\sigma_{k,j+1} = \gamma \sigma_{k,j}$, update $j \leftarrow j + 1$,  and go to~Step~2.
+% \item[Step~4.] Define $x^{k+1} = \xkjtrial$, $\sigma_k = \sigma_{k,j}$, $j_k = j$, update $k \leftarrow k+1$ and go to~Step~1.
+% \end{description}
+
+
+\section{Optimality condition and complexity}
+
+% \begin{assumption} \label{a1}
+% The functions \( f_1, \dots, f_m \) belong to \( \mathcal{C}^1(\Omega) \), that is, they are differentiable and their gradients are continuous on \( \Omega \).
+% \end{assumption}
+
+% \begin{theorem}\label{teo:conv1}
+% Suppose that Assumption~\ref{a1} is satisfied. If \( x^* \) is a local minimizer of problem~(3), then it is also a local minimizer of the problem
+% \begin{equation} \label{ovo-problem-0}
+% \minimize_{x\in\Omega}\, \Psi(x;x^*,0,0)
+% \end{equation}
+% \end{theorem}
+
+% \begin{proof}
+% For a contradiction we assume that $x^*$ is not a local minimizer of problem~\eqref{ovo-problem-0}. Then, there exist $y^*\in\Omega$ such that $\Psi(y^*;x^*,0,0) < \Psi(x^*;x^*,0,0)$, that is, for all $i\in I_0(x^*)$
+% \[
+% \nabla f_i(x^*)^T(y^*-x^*) < -\dfrac{1}{2}(y^*-x^*)^TB(y^*-x^*).
+% \]
+% By Assumption~\ref{a1}, and since $B$ is positive semidefinite, we obtain
+% \[
+% \lim_{t\to 0}\dfrac{f_i(x^*+t(y^*-x^*)) - f(x^*)}{t} = \nabla f_i(x^*)^T(y^*-x^*) < 0,\quad\forall i\in I_0(x^*).
+% \]
+% Therefore, there exists $\bar t_i > 0$ such that $f_i(x^* + t (y^* - x^*)) < f_i(x^*)$ for all $t \in (0, \bar t_i]$. Fixing $\bar t = \min_{i \in I(x^*)} \{\bar t_i \}$, we obtain that
+% \begin{equation} \label{bajaste}
+% f_i(x^* + t (y^* - x^*)) < f(x^*) \mbox{ for all } i \in I_0(x^*) \mbox{ and } t \in (0, \bar t].
+% \end{equation}
+% Now, for all $j \in \{1,2,\dots,m\} \setminus I_0(x^*)$, if $t$ is sufficiently small, by the continuity of the functions $f_1,\dots,f_m$, one has that
+% \begin{equation} \label{arriba}
+% f_i(x^* + t(y^* - x^*)) < f_j(x^* + t(y^* - x^*)) \mbox{ whenever } i \in I(x^*) \mbox{ and } f(x^*) < f_j(x^*)
+% \end{equation}
+% and 
+% \begin{equation} \label{abajo}
+% f_i(x^* + t(y^* - x^*)) > f_j(x^* + t(y^* - x^*)) \mbox{ whenever } i \in I(x^*) \mbox{ and } f(x^*) > f_j(x^*).
+% \end{equation}
+% Therefore, the set of positions occupied by the values $\{f_i(x^*+t(y^*-x^*))\}_{i \in I_0(x^*)}$, in the smallest to largest ranking of the values $\{f_i(x^*+t(y^*-x^*))\}_{i=1}^m$, is equal to the set of positions occupied by the values $\{f_i(x^*)\}_{i \in I(x^*)}$ in the smallest to largest ranking of the values $\{f_i(x^*)\}_{i=1}^m$. This set includes $i_p(x^*+t(x-x^*))$. Hence, for every $t$ small enough there exists $i \in I(x^*)$ such that
+% \[
+% f_i(x^*+t(y^*-x^*))=f_{i_p(x^*+t(y^*-x^*))}(x^*+t(y^*-x^*))=f(x^*+t(y^*-x^*)).
+% \]
+
+% By~\eqref{bajaste}, we deduced that, for all $t$ small enough, $f(x^* + t(y^* - x^*)) < f(x^*)$. Due to the convexity of~$\Omega$, $x^* + t(y^* - x^*) \in \Omega$, for all $t \in [0,1]$. Therefore, $x^*$ can not be a local minimizer of~\eqref{ovo-problem-0}.
+% \end{proof}
+
+\begin{assumption} \label{a1}
+The functions $f_1, \ldots, f_m$ belong to $\mathcal{C}^1(\Omega)$, 
+that is, they are continuously differentiable on $\Omega$.
+\end{assumption}
+
+We begin by establishing that local minimizers of \eqref{ovo-problem} 
+are also minimizers of a related subproblem involving the model 
+$\Psi$. This result is fundamental because it connects the geometry 
+of the original nonsmooth problem with the smooth subproblems solved 
+at each iteration, and it will be used to derive the optimality 
+condition for \eqref{ovo-problem}.
+
+\begin{theorem} \label{teo:conv1}
+Suppose that Assumption~\ref{a1} is satisfied. If $x^*$ is a local 
+minimizer of problem \eqref{ovo-problem}, then it is also a local 
+minimizer of the problem
+\begin{equation} \label{ovo-problem-0}
+    \minimize_{x \in \Omega}\, \Psi(x; x^*, 0, 0).
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Suppose for contradiction that $x^*$ is not a local minimizer of 
+\eqref{ovo-problem-0}. Then there exists $y^* \in \Omega$ such that 
+$\Psi(y^*; x^*, 0, 0) < \Psi(x^*; x^*, 0, 0) = 0$, which means that 
+for all $i \in I_0(x^*)$,
+\begin{equation*}
+    \nabla f_i(x^*)^T(y^* - x^*) < 0.
+\end{equation*}
+Note that the curvature term vanishes here since $\sigma = 0$ and 
+$B = 0$ in \eqref{ovo-problem-0}. By Assumption~\ref{a1}, each 
+$f_i$ is differentiable on $\Omega$, so
+\begin{equation*}
+    \lim_{t \to 0} \frac{f_i(x^* + t(y^* - x^*)) - f_i(x^*)}{t} 
+    = \nabla f_i(x^*)^T(y^* - x^*) < 0, 
+    \quad \forall i \in I_0(x^*).
+\end{equation*}
+Therefore, there exists $\bar{t}_i > 0$ such that 
+$f_i(x^* + t(y^* - x^*)) < f_i(x^*)$ for all $t \in (0, \bar{t}_i]$. 
+Setting $\bar{t} = \min_{i \in I_0(x^*)}\{\bar{t}_i\}$, we obtain
+\begin{equation} \label{bajaste}
+    f_i(x^* + t(y^* - x^*)) < f_i(x^*) = f(x^*) 
+    \quad \text{for all } i \in I_0(x^*) \text{ and } t \in (0, \bar{t}].
+\end{equation}
+For indices $j \notin I_0(x^*)$, the continuity of $f_1, \ldots, f_m$ 
+guarantees that, for $t$ sufficiently small,
+\begin{align}
+    f_i(x^* + t(y^* - x^*)) &< f_j(x^* + t(y^* - x^*)) 
+    \quad \text{whenever } i \in I(x^*) \text{ and } 
+    f(x^*) < f_j(x^*), \label{arriba} \\
+    f_i(x^* + t(y^* - x^*)) &> f_j(x^* + t(y^* - x^*)) 
+    \quad \text{whenever } i \in I(x^*) \text{ and } 
+    f(x^*) > f_j(x^*). \label{abajo}
+\end{align}
+Inequalities \eqref{arriba}--\eqref{abajo} imply that the relative 
+ordering of the active indices $I_0(x^*)$ within the full ranking of 
+$\{f_i(x^* + t(y^* - x^*))\}_{i=1}^m$ is preserved from $x^*$ to 
+$x^* + t(y^* - x^*)$ for all $t$ small enough. In particular, the 
+$p$-th position in the ranking is still occupied by some index 
+$i \in I_0(x^*)$, so
+\begin{equation*}
+    f_i(x^* + t(y^* - x^*)) = f_{i_p(x^* + t(y^* - x^*))}
+    (x^* + t(y^* - x^*)) = f(x^* + t(y^* - x^*)).
+\end{equation*}
+Combined with \eqref{bajaste}, this gives $f(x^* + t(y^* - x^*)) < 
+f(x^*)$ for all $t$ small enough. Since $\Omega$ is convex, 
+$x^* + t(y^* - x^*) \in \Omega$ for all $t \in [0,1]$, contradicting 
+the assumption that $x^*$ is a local minimizer of 
+\eqref{ovo-problem}.
+\end{proof}
+
+% \begin{theorem}\label{teo:conv2}
+% Suppose that Assumption~\ref{a1} is satisfied and let $\sigma\geq 0$. If \( x^* \) is a local minimizer of problem~(3), then it is also a local minimizer of the problem
+% \begin{equation} \label{ovo-problem-1}
+% \minimize_{x\in\Omega}\, \Psi(x;x^*,0,\sigma)
+% \end{equation}
+% \end{theorem}
+
+% \begin{proof}
+% For a contradiction we assume that $x^*$ is not a local minimizer of problem~\eqref{ovo-problem-1}. Then, there exist $y^*\in\Omega$ such that
+% $\Psi(y^*;x^*,0,\sigma) < \Psi(x^*;x^*,0,\sigma)$. Hence, for all $i\in I_0(x^*)$, we have that
+% \[
+% \max_{i\in I_0(x^*)}\left\{\nabla f_i(x^*)^T(y^*-x^*)\right\} + \dfrac{1}{2}\left[(y^*-x^*)^TB(y^*-x^*)+ \sigma\|y^*-x^*\|^2 \right] < 0.
+% \]
+% Therefore, there exist $y^*\in\Omega$ such that $\psi(y^*;x^*,0,0)<0$, contradicting the thesis of Theorem~\ref{teo:conv1}.
+% \end{proof}
+
+\begin{theorem} \label{teo:conv2}
+Suppose that Assumption~\ref{a1} is satisfied and let $\sigma \geq 0$. 
+If $x^*$ is a local minimizer of problem \eqref{ovo-problem}, then it 
+is also a local minimizer of the problem
+\begin{equation} \label{ovo-problem-1}
+    \minimize_{x \in \Omega}\, \Psi(x; x^*, 0, \sigma).
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Suppose for contradiction that $x^*$ is not a local minimizer of 
+\eqref{ovo-problem-1}. Then there exists $y^* \in \Omega$ such that 
+$\Psi(y^*; x^*, 0, \sigma) < \Psi(x^*; x^*, 0, \sigma) = 0$, which 
+means that
+\begin{equation*}
+    \max_{i \in I_0(x^*)} \left\{ \nabla f_i(x^*)^T(y^* - x^*) \right\} 
+    + \frac{1}{2}\left[(y^* - x^*)^T B (y^* - x^*) 
+    + \sigma \|y^* - x^*\|^2\right] < 0.
+\end{equation*}
+Since $B$ is positive semidefinite and $\sigma \geq 0$, the second 
+term satisfies
+\begin{equation*}
+    \frac{1}{2}\left[(y^* - x^*)^T B (y^* - x^*) 
+    + \sigma \|y^* - x^*\|^2\right] \geq 0.
+\end{equation*}
+Therefore, we necessarily have
+\begin{equation*}
+    \max_{i \in I_0(x^*)} \left\{ \nabla f_i(x^*)^T(y^* - x^*) \right\} 
+    < 0,
+\end{equation*}
+which means that $\Psi(y^*; x^*, 0, 0) < 0$. This contradicts 
+Theorem~\ref{teo:conv1}, which guarantees that $x^*$ is a minimizer 
+of $\Psi(\cdot\,; x^*, 0, 0)$ over $\Omega$ and hence 
+$\Psi(y^*; x^*, 0, 0) \geq \Psi(x^*; x^*, 0, 0) = 0$ for all 
+$y^* \in \Omega$.
+\end{proof}
+
+% \begin{theorem}
+% Suppose that Assumption~\ref{a1} is satisfied and let $\sigma,\,\delta\geq 0$. If \( x^* \) is a local minimizer of problem~(3), then it is also a local minimizer of the problem
+% \begin{equation} \label{ovo-problem-2}
+% \minimize_{x\in\Omega}\, \Psi(x;x^*,\delta,\sigma)
+% \end{equation}
+% \end{theorem}
+
+% \begin{proof}
+% For a contradiction we assume that $x^*$ is not a local minimizer of problem~\eqref{ovo-problem-2}. Then, there exist $y^*\in\Omega$ such that
+% $\Psi(y^*;x^*,\delta,\sigma) < \Psi(x^*;x^*,\delta,\sigma)$. Thus, we obtain
+% \[
+% \max_{i\in I_\delta(x^*)}\left\{\nabla f_i(x^*)^T(y^*-x^*)\right\} + \dfrac{1}{2}\left[(y^*-x^*)^TB(y^*-x^*)+ \sigma\|y^*-x^*\|^2 \right] < 0,
+% \]
+% that is,
+% \[
+% \nabla f_i(x^*)^T(y^*-x^*) + \dfrac{1}{2}\left[(y^*-x^*)^TB(y^*-x^*)+ \sigma\|y^*-x^*\|^2 \right] < 0, \quad\text{for all }\, i\in I_\delta(x^*)\supseteq I_0(x^*).
+% \]
+% Therefore, $\psi(y^*;x^*,0,\sigma)<0$ and, by Theorem~\ref{teo:conv2}, this is impossible.
+% \end{proof}
+
+\begin{theorem} \label{teo:conv3}
+Suppose that Assumption~\ref{a1} is satisfied and let $\sigma, \delta 
+\geq 0$. If $x^*$ is a local minimizer of problem \eqref{ovo-problem}, 
+then it is also a local minimizer of the problem
+\begin{equation} \label{ovo-problem-2}
+    \minimize_{x \in \Omega}\, \Psi(x; x^*, \delta, \sigma).
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Suppose for contradiction that $x^*$ is not a local minimizer of 
+\eqref{ovo-problem-2}. Then there exists $y^* \in \Omega$ such that 
+$\Psi(y^*; x^*, \delta, \sigma) < \Psi(x^*; x^*, \delta, \sigma) = 0$, 
+which means that
+\begin{equation*}
+    \max_{i \in I_\delta(x^*)} \left\{ \nabla f_i(x^*)^T(y^* - x^*) 
+    \right\} + \frac{1}{2}\left[(y^* - x^*)^T B (y^* - x^*) 
+    + \sigma \|y^* - x^*\|^2\right] < 0.
+\end{equation*}
+Since the maximum is taken over $I_\delta(x^*) \supseteq I_0(x^*)$, 
+the above inequality implies in particular that for all 
+$i \in I_\delta(x^*)$,
+\begin{equation*}
+    \nabla f_i(x^*)^T(y^* - x^*) + \frac{1}{2}\left[(y^* - x^*)^T 
+    B (y^* - x^*) + \sigma \|y^* - x^*\|^2\right] < 0,
+\end{equation*}
+and since $I_0(x^*) \subseteq I_\delta(x^*)$, this holds in 
+particular for all $i \in I_0(x^*)$. The key observation is that 
+enlarging the active index set from $I_0(x^*)$ to $I_\delta(x^*)$ 
+can only increase the value of the maximum in the model, yet the 
+inequality still holds. Therefore,
+\begin{equation*}
+    \max_{i \in I_0(x^*)} \left\{ \nabla f_i(x^*)^T(y^* - x^*) 
+    \right\} + \frac{1}{2}\left[(y^* - x^*)^T B (y^* - x^*) 
+    + \sigma \|y^* - x^*\|^2\right] < 0,
+\end{equation*}
+which means $\Psi(y^*; x^*, 0, \sigma) < 0$. This contradicts 
+Theorem~\ref{teo:conv2}, which establishes that $x^*$ is a minimizer 
+of $\Psi(\cdot\,; x^*, 0, \sigma)$ over $\Omega$ and hence 
+$\Psi(y^*; x^*, 0, \sigma) \geq 0$ for all $y^* \in \Omega$.
+\end{proof}
+
+% In the same spirit as~\cite{alvarezovo}, given $\epsilon>0$, we say that $x$ satisfies the optimality condition $C_{\delta,\epsilon}$ if there exist $\mu\in\Sigma_{|I_\delta(x)|}$ and $\nu^\ell,\nu^u\in\R_+^n$ such that $(\ell_i-x_i)\nu_i^\ell = (x_i-u_i)\nu_i^u$ = 0 for all $i = 1,2,\dots,n$, and
+% \begin{equation} \label{miaprox-box}
+% \left\| \sum_{i \in I(x,\delta)} \mu_i \nabla f_i(x) + \sum_{i=1}^n \left( \nu^u_i - \nu^\ell_i \right) e^i \right\| \leq \epsilon,
+% \end{equation}
+% where $e_i$ denotes the $i$-th standard basis vector of $\mathbb{R}^n$, and $\Sigma_q \subset \mathbb{R}^q$ denotes the $q$-simplex defined by
+% \[
+% \simplex_q= \left\{ \lambda \in \R^q \;|\; \sum_{j=1}^q \lambda_j = 1 \mbox{ and } \lambda_j \geq 0 \mbox{ for } j=1,\dots,q \right\}.
+% \]
+
+% \begin{theorem}\label{teo:conv3}
+% Suppose that Assumption~\ref{a1} is satisfied. Then, for every $k$ and $j=0,\dots,j_k$, there exist $\mu \in \simplex_{|I(x^k,\delta)|}$ and $\nu^\ell, \nu^u \in \R^n_{+}$ such that
+% \begin{equation} \label{eqcoro1}
+% \xkjtrial - x^k = \dfrac{1}{\sigma_{k,j}} \left[ \sum_{i=1}^n \left( \nu^\ell_i - \nu^u_i \right) e^i - \sum_{i \in I(x^k,\delta)} \mu_i \, \nabla f_i(x^k) \right].
+% \end{equation}
+% \end{theorem}
+% \begin{proof}
+% See~\cite{alvarezovo}.
+% \end{proof}
+
+% \begin{assumption} \label{a2}
+% For all $k$ and $j=0,\dots,j_k$, the associated Lagrange multipliers $\nu^\ell$ and $\nu^u$ of Lemma~\ref{teo:conv3} are such that $\max_{\{i=1,\dots,n\}}\{|\nu^\ell_i - \nu^u_i|\}$ is bounded by a constant $c_{\nu}$ which depends neither on $k$ nor on $j$.
+% \end{assumption}
+
+% Note that MFCQ guarantees that, for every $k$ and $j \in \{ 0,\dots,j_k \}$, the associated Lagrange multipliers $\nu^\ell$ and $\nu^u$ of Lemma~\ref{teo:conv3} are bounded by a constant see~\cite{gauvin}), which in turn implies that $\max_{\{i=1,\dots,n\}}\{|\nu^\ell_i - \nu^u_i|\}$ is bounded by a constant. Assumption~\ref{a2} says that there exists a constant for all $k$ and $j \in \{ 0,\dots,j_k \}$ which depends neither on $k$ nor on $j$.
+
+In the spirit of~\cite{alvarezovo}, Theorems~\ref{teo:conv1}--\ref{teo:conv3} 
+motivate the following approximate optimality condition, which 
+will serve as the stopping criterion for Algorithm~\ref{sec:method}.1. 
+The condition measures how far a given point is from satisfying the 
+necessary conditions for local optimality of \eqref{ovo-problem}, 
+using the active index set $I_\delta(x)$ to account for the 
+nonsmooth structure of $f$.
+
+\begin{definition} \label{def:optcond}
+Given $\epsilon > 0$ and $\delta > 0$, we say that $x \in \Omega$ 
+satisfies the \textit{approximate optimality condition} $C_{\delta,\epsilon}$ 
+if there exist $\mu \in \Sigma_{|I_\delta(x)|}$ and $\nu^\ell, \nu^u 
+\in \mathbb{R}^n_+$ such that $(\ell_i - x_i)\nu_i^\ell = 
+(x_i - u_i)\nu_i^u = 0$ for all $i = 1, 2, \ldots, n$, and
+\begin{equation} \label{miaprox-box}
+    \left\| \sum_{i \in I(x,\delta)} \mu_i \nabla f_i(x) 
+    + \sum_{i=1}^{n} \left(\nu_i^u - \nu_i^\ell\right) e^i 
+    \right\| \leq \epsilon,
+\end{equation}
+where $e_i$ denotes the $i$-th standard basis vector of $\mathbb{R}^n$, 
+and $\Sigma_q \subset \mathbb{R}^q$ denotes the $q$-simplex defined by
+\begin{equation*}
+    \Sigma_q = \left\{ \lambda \in \mathbb{R}^q \mid 
+    \sum_{j=1}^{q} \lambda_j = 1 \text{ and } \lambda_j \geq 0 
+    \text{ for } j = 1, \ldots, q \right\}.
+\end{equation*}
+\end{definition}
+
+The condition $C_{\delta,\epsilon}$ can be interpreted as an 
+approximate stationarity requirement: the weighted combination of 
+gradients of the active component functions, corrected by the 
+multipliers associated with the box constraints, must be small in 
+norm. When $\epsilon = 0$ and $\delta = 0$, this reduces to an 
+exact necessary optimality condition for \eqref{ovo-problem}, as 
+guaranteed by Theorem~\ref{teo:conv3}.
+
+\begin{theorem} \label{teo:conv3}
+Suppose that Assumption~\ref{a1} is satisfied. Then, for every $k$ 
+and $j = 0, \ldots, j_k$, there exist $\mu \in \Sigma_{|I(x^k,\delta)|}$ 
+and $\nu^\ell, \nu^u \in \mathbb{R}^n_+$ such that
+\begin{equation} \label{eqcoro1}
+    x_{\mathrm{trial}}^{k,j} - x^k = \frac{1}{\sigma_{k,j}} 
+    \left[ \sum_{i=1}^{n} \left(\nu_i^\ell - \nu_i^u\right) e^i 
+    - \sum_{i \in I(x^k,\delta)} \mu_i \nabla f_i(x^k) \right].
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+The result follows from applying the 
+KKT conditions to the subproblem \eqref{ovo-subpro}, where the 
+presence of the curvature matrix $B_{k,j}$ does not affect the 
+structure of the optimality conditions since $B_{k,j}$ enters 
+only through the quadratic term, which vanishes in the gradient 
+expression evaluated at the minimizer.
+\end{proof}
+
+\begin{assumption} \label{a2}
+For all $k$ and $j = 0, \ldots, j_k$, the Lagrange multipliers 
+$\nu^\ell$ and $\nu^u$ of Theorem~\ref{teo:conv3} satisfy 
+$\max_{\{i=1,\ldots,n\}}\{|\nu_i^\ell - \nu_i^u|\} \leq c_\nu$ 
+for some constant $c_\nu > 0$ that depends neither on $k$ nor on $j$.
+\end{assumption}
+
+The Mangasarian-Fromovitz Constraint Qualification (MFCQ) guarantees 
+that, for every $k$ and $j \in \{0, \ldots, j_k\}$, the Lagrange 
+multipliers $\nu^\ell$ and $\nu^u$ of Theorem~\ref{teo:conv3} are 
+bounded by a constant (see \cite{gauvin}), which implies that 
+$\max_{\{i=1,\ldots,n\}}\{|\nu_i^\ell - \nu_i^u|\}$ is bounded. 
+Assumption~\ref{a2} strengthens this by requiring a single uniform 
+bound across all $k$ and $j \in \{0, \ldots, j_k\}$. This is a 
+mild requirement: it holds automatically whenever the iterates 
+$\{x^k\}$ remain in a compact region and the active sets 
+$I(x^k, \delta)$ do not degenerate, which is ensured in practice 
+by the boundedness of $\Omega$ and the continuity of the gradients 
+under Assumption~\ref{a1}.
+
+\begin{assumption} \label{a3}
+$\| \nabla f_1(x) \|, \| \nabla f_2(x) \|, \dots, \| \nabla f_m(x) \|$ are bounded from above by a constant~$c_{\nabla}$ for all $x \in \Omega$.
+\end{assumption}
+
+By Theorem~\ref{teo:conv3} and Assumption~\ref{a3} we obtain
+\[
+\| \xkjtrial - x^k \| \leq \dfrac{1}{\sigma_{k,j}} \left[ \sum_{i=1}^n \left| \nu^\ell_i - \nu^u_i \right| + c_{\nabla} \right].
+\]
+Then, by Assumption~\ref{a2}, we have that
+\begin{equation} \label{ccotasub}
+ \| \xkjtrial - x^k \| \leq c_x / \sigma_{k,j},
+\end{equation} 
+where $c_x = n \, c_{\nu} + c_{\nabla}$.
+
+\begin{assumption} \label{a4}
+There exists $L > 0$ such that, for $i=1,\dots,m$ and all $x,y \in \Omega$,
+\begin{equation} \label{taylor}
+f_i(y) \leq f_i(x) + \nabla f_i(x)^T (y - x) + \dfrac{L}{2}\|y - x\|^2.
+\end{equation}
+\end{assumption}
+
+\begin{lemma} \label{lem1}
+Let $a_1, \dots, a_r \in \R$, $b_1, \dots, b_r \in \R$, $\beta > 0$, and $\{i_1, \dots, i_r\} = \{1, \dots, r \}$ be such that $a_1 \leq \dots \leq a_r$, $b_j \leq a_j - \beta$ for $j = 1, \dots, r$, and $b_{i_1} \leq \dots \leq b_{i_r}$. Then, $b_{i_q} \leq a_q - \beta$ for $q=1,\dots,r$.
+\end{lemma}
+\begin{proof}
+See \cite{dunder1}.
+\end{proof}
+
+\begin{theorem}
+Suppose that Assumptions \ref{a1}, \ref{a3} and \ref{a4} hold. Then, for all $k$ and $j=0,\dots,j_k$, if 
+\begin{equation}\label{este}
+\sigma_{k,j} \geq \max \left\{ L + 2 \alpha, 9 c_x^2 / (2 \delta) \right\}
+\end{equation}
+then $\xkjtrial$ satisfies \eqref{ovo-armijo}.
+\end{theorem}
+\begin{proof}
+By Assumption~\ref{a4}, there exists $L>0$ such that, for all $i=1,2,\dots,m$,
+\begin{align*}
+f_i(\xkjtrial) &\leq f_i(x^k) + \nabla f_i(x^k)^T(\xkjtrial-x^k)+\dfrac{L}{2}\|\xkjtrial - x^k\|^2\\
+&\leq f_i(x^k) + \nabla f_i(x^k)^T(\xkjtrial-x^k)+\left(\dfrac{\sigma}{2}-\alpha\right)\|\xkjtrial - x^k\|^2\\
+&\leq f_i(x^k) + \nabla f_i(x^k)^T(\xkjtrial-x^k)+\dfrac{1}{2}\left[(\xkjtrial-x^k)^TB(\xkjtrial-x^k) + \sigma\|\xkjtrial - x^k\|^2\right] \\
+&\quad -\alpha\|\xkjtrial - x^k\|^2 - \dfrac{1}{2}(\xkjtrial-x^k)^TB(\xkjtrial-x^k).
+\end{align*}
+Since $B$ is a positive semi-definite matrix, it holds that $(\xkjtrial-x^k)^T B(\xkjtrial-x^k)\ge 0$. Therefore, dropping the non-positive term
+$-\frac12(\xkjtrial-x^k)^T B(\xkjtrial-x^k)$, we obtain
+\begin{align*}
+f_i(\xkjtrial) &\leq f_i(x^k) + \nabla f_i(x^k)^T(\xkjtrial-x^k)+\dfrac{1}{2}\left[(\xkjtrial-x^k)^TB(\xkjtrial-x^k) + \sigma\|\xkjtrial - x^k\|^2\right] \\
+&\quad - \alpha\|\xkjtrial - x^k\|^2
+\end{align*}
+Note that $\Psi(x^k; x^k,\delta,\sigma)=0$. Hence,
+\[
+\nabla f_i(x^k)^{T}(x_{\mathrm{trial}}^{k,j}-x^k)
++\frac12\Bigl[(x_{\mathrm{trial}}^{k,j}-x^k)^{T}B(x_{\mathrm{trial}}^{k,j}-x^k)
++\sigma\|x_{\mathrm{trial}}^{k,j}-x^k\|^2\Bigr]\le 0,
+\]
+for all $i\in I_\delta(x^k)$. Therefore, 
+\begin{equation}\label{cota-lem2}
+f_i(\xkjtrial) \leq f_i(x^k) - \alpha \|\xkjtrial - x^k\|^2,
+\end{equation}
+for all $i \in I_\delta(x^k)$. On the other hand, 
+\begin{equation}\label{teo7eq1}
+f_i(\xkjtrial) - \dfrac{\delta}{3}\le f_i(x^k)\le f_i(\xkjtrial) + \dfrac{\delta}{3},
+\end{equation}
+for $i=1,\dots,m$.
+\end{proof}
+%\clearpage
+
+\begin{thebibliography}{99}
+
+\bibitem{abmsobso} R. Andreani, E. G. Birgin, J. M. Mart\'{\i}nez and M. L. Schuverdt, Augmented Lagrangian methods under the Constant Positive Linear Dependence constraint qualification, \textit{Mathematical Programming} 111, pp. 5--32, 2008.
+
+\bibitem{abmstango} R. Andreani, E. G. Birgin, J. M. Mart\'{\i}nez and M. L. Schuverdt, On Augmented Lagrangian methods with general lower-level constraints, \textit{SIAM Journal on Optimization} 18, pp. 1286--1309, 2008.
+
+\bibitem{dunder1} R. Andreani, C. Dunder and J. M. Mart\'{\i}nez, Order-Value Optimization: Formulation and solution by means of a primal Cauchy method, \textit{Mathematical Methods of Operations Research} 58, pp. 387--399, 2003.
+
+\bibitem{dunder2} R. Andreani, C. Dunder and J. M. Mart\'{\i}nez, Nonlinear-programming reformulation of the order-value optimization problem, \textit{Mathematical Methods of Operations Research} 61, pp. 365--384, 2005.
+
+\bibitem{yano1} R. Andreani, J. M. Mart\'{\i}nez, M. Salvatierra, and F. S. Yano, Quasi-Newton methods for Order-Value Optimization and Value-at-Risk calculations, \textit{Pacific Journal of Optimization} 2, pp. 11--33, 2006.
+
+\bibitem{yano2} R. Andreani, J. M. Mart\'{\i}nez, L. Mart\'{\i}nez, and F. S. Yano, Low order-value optimization and applications, \textit{Journal of Global Optimization} 43, pp. 1--22, 2009.
+
+\bibitem{salva} R. Andreani, J. M. Mart\'{\i}nez, M. Salvatierra, and F. S. Yano, Global order-value optimization by means of a multistart harmonic oscillator tunneling strategy, in \textit{Global Optimization: From Theory to Implementation}, L. Liberti and N. Maculan (eds.), Springer, Boston, MA, 2006, pp. 379--404.
+
+\bibitem{bgms} E. G. Birgin, J. L. Gardenghi, J. M. Mart\'{\i}nez, and S. A. Santos, On the use of third-order models with fourth-order regularization for unconstrained optimization, \textit{Optimization Letters} 14, pp. 815--838, 2020.
+
+\bibitem{bgmst2} E. G. Birgin, J. L. Gardenghi, J. M. Mart\'{\i}nez, S. A. Santos, and Ph. L. Toint, Evaluation complexity for nonlinear constrained optimization using unscaled KKT conditions and high-order models, \textit{SIAM Journal on Optimization} 26, pp. 951--967, 2016.
+
+\bibitem{bgmst1} E. G. Birgin, J. L. Gardenghi, J. M. Mart\'{\i}nez, S. A. Santos, and Ph. L. Toint, Worst-case evaluation complexity for unconstrained nonlinear optimization using high-order regularized models, \textit{Mathematical Programming} 163, pp. 359--368, 2017.
+
+\bibitem{bmbook} E. G. Birgin and J. M. Mart\'{\i}nez, \textit{Practical Augmented Lagrangian Methods for Constrained Optimization}, Society for Industrial and Applied Mathematics, Philadelphia, 2014.
+
+\bibitem{bmcomper} E. G. Birgin and J. M. Mart\'{\i}nez, Complexity and performance of an Augmented Lagrangian algorithm, \textit{Optimization Methods and Software} 35, pp. 885--920, 2020.
+
+\bibitem{cogtbook} C. Cartis, N. I. M. Gould, and Ph. L. Toint, \textit{Evaluation Complexity of Algorithms for Nonconvex Optimization: Theory, Computation, and Perspectives}, SIAM, Philadelphia, PA, 2022.
+
+\bibitem{farrington} C. P. Farrington, Modelling forces of infection for measles, mumps and rubella, \textit{Statistics in Medicine} 9, pp. 953--967, 1990.
+
+\bibitem{gauvin} J. Gauvin, A necessary and sufficient regularity condition to have bounded multipliers in nonconvex programming, \textit{Mathematical Programming} 12, pp. 136--138.
+  
+\bibitem{jorion} P. Jorion, \textit{Value at {R}isk: {T}he new benchmark for managing financial risk}, 3rd. ed., McGraw-Hill, 2009.
+
+\bibitem{mtop} J. M. Mart\'{\i}nez, Generalized Order-Value Optimization, \textit{TOP} 20, pp. 75--98, 2012.
+
+\bibitem{mgh} J. J. Mor\'e, B. S. Garbow, and K. E. Hillstrom, Testing unconstrained optimization software, \textit{ACM Transactions on Mathematical Software} 7, pp. 17--41, 1981.
+  
+\bibitem{nesterov} Y. Nesterov and B. T. Polyak, Cubic regularization of Newton method and its global performance, \textit{Mathematical Programming} 108, 177--205, 2006.
+
+\bibitem{jiang} Z. Jiang, Q. Hu, and X. Zheng, Optimality condition and complexity of order-value optimization problems and low order-value optimization problems, \textit{Journal of Global Optimization} 69, pp. 511--523, 2017.
+
+\bibitem{alvarezovo} G. Q. Álvarez and E. G. Birgin, A first-order regularized approach to the order-value optimization problem, \textit{Optimization Methods and Software} 40, pp. 650--674, 2025.
+    
+\end{thebibliography}
+
+\end{document}
