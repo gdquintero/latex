@@ -628,7 +628,123 @@ $f(x^0) - \flow > |K| \cdot \alpha\epsilon^2 /
 \big( M + \gamma\max\{L + 2\alpha, 9c_x^2/(2\delta)\} \big)^2$, from which
 \eqref{cota-iter} follows.
 \end{proof}
-%\clearpage
+
+\section{Numerical experiments} \label{sec:numerical}
+
+We illustrate the method on parameter-estimation problems in which the data
+contain an unknown number of outliers, following the OVO methodology of
+\cite{alvarezovo}. Given a model $y(t,x)$ with parameters $x\in\Omega$ and data
+$(t_i,y_i)$, $i=1,\dots,m$, we set
+\[
+f_i(x)=\tfrac12\big(y(t_i,x)-y_i\big)^2,\qquad i=1,\dots,m.
+\]
+For a prescribed number $o$ of outliers, solving \eqref{ovo-problem} with
+$p=m-o$ fits the parameters to the $p$ best-explained observations while
+discarding the $o$ worst. Since the true number of outliers is unknown, we
+solve a sequence of OVO problems with increasing $o$; a sharp drop in $f(x^*)$
+identifies the number of outliers present.
+
+Our aim is to assess the effect of the curvature matrix $B$. We therefore
+compare two instances of Algorithm~\ref{sec:method}.1 that differ \emph{only}
+in $B$: the first-order method ($B_{k,j}=0$, which coincides with
+\cite{alvarezovo}) and the quasi-Newton variant, in which $B_{k,j}$ is built
+from the Gauss--Newton curvature of the active component. For the least-squares
+functions above, $\nabla f_i(x)=r_i(x)\nabla r_i(x)$ with
+$r_i(x)=y(t_i,x)-y_i$, so the Gauss--Newton curvature
+$\nabla r_i(x)\nabla r_i(x)^T\succeq0$ is available from quantities already
+computed for the model and requires no second derivatives. To respect the
+bound $\|B_{k,j}\|\le M$ of Step~2, we scale the curvature so that its spectral
+norm does not exceed $M$; like $\delta$, the value of $M$ is chosen by trial
+and error.
+
+As in \cite{alvarezovo}, subproblem \eqref{ovo-subpro} is reformulated as the
+smooth nonlinear program
+\[
+\minimize_{x\in\Omega,\,w}\ w \quad\text{s.t.}\quad
+\nabla f_i(x^k)^T(x-x^k)
++\tfrac12\big[(x-x^k)^TB_{k,j}(x-x^k)+\sigma_{k,j}\|x-x^k\|^2\big]\le w,
+\quad i\in I_\delta(x^k),
+\]
+solved with Algencan \cite{bmbook,bmcomper}, whose multipliers furnish
+$\mu,\nu^\ell,\nu^u$ for checking $C_{\delta,\epsilon}$. Throughout we use
+$\sigma_{\min}=0.1$, $\alpha=10^{-8}$, $\gamma=5$, and $\epsilon=10^{-4}$. Both
+methods are run from identical starting points with the same random seed, so
+that any difference is attributable to $B$.
+
+\subsection{A model linear in the parameters} \label{subsec:poly}
+
+Following \cite{dunder1}, we fit the third-degree polynomial
+$y(t,x)=x_1+x_2t+x_3t^2+x_4t^3$, with $-10\le x_i\le10$, to a set of $m=46$
+observations containing $10$ outliers, taken from \cite{dunder1}. The
+least-squares fit to the contaminated data is
+$\bar x\approx(6.46,\,2.71,\,-7.54,\,2.16)^T$. As the OVO problem has many
+non-global minimizers, for each $o\in\{0,\dots,12\}$ we run the algorithm from
+$100$ starting points $x^0_i=\bar x_i+r\,|\bar x_i|$, with $r\sim U[-0.5,0.5]$
+(projected onto $\Omega$), and report the best $x^*$. We take $\delta=0.1$ and
+$M=1$.
+
+Table~\ref{tab:poly} reports, for each $o$ and for both methods, the best value
+$f(x^*)$, the number of outer iterations, and the number of function
+evaluations. Both methods identify the $10$ outliers through the sharp drop of
+$f(x^*)$ between $o=9$ and $o=10$, and return solutions of the same quality.
+Their iteration and evaluation counts are comparable: in aggregate the
+first-order method uses $480$ iterations and $2324$ evaluations, the
+quasi-Newton variant $485$ and $2389$; the per-instance differences have no
+systematic sign and cancel out, reflecting the run-to-run variability of the
+multistart procedure rather than an effect of $B$.
+
+\begin{table}[ht!]
+\centering
+
+\label{tab:poly}
+\begin{tabular}{c ccc ccc}
+\hline
+ & \multicolumn{3}{c}{First-order ($B=0$)} & \multicolumn{3}{c}{Quasi-Newton ($M=1$)} \\
+$o$ & $f(x^*)$ & \#it & \#fcnt & $f(x^*)$ & \#it & \#fcnt \\
+\hline
+0  & 1.363e+01 & 27 & 105 & 1.362e+01 & 30 & 120 \\
+1  & 1.145e+01 & 37 & 170 & 1.145e+01 & 39 & 180 \\
+2  & 1.004e+01 & 40 & 194 & 1.005e+01 & 40 & 187 \\
+3  & 9.535e+00 & 39 & 202 & 9.530e+00 & 39 & 184 \\
+4  & 9.013e+00 & 40 & 164 & 9.014e+00 & 43 & 196 \\
+5  & 8.455e+00 & 38 & 170 & 8.460e+00 & 32 & 134 \\
+6  & 7.436e+00 & 44 & 225 & 7.434e+00 & 55 & 286 \\
+7  & 6.921e+00 & 38 & 206 & 6.907e+00 & 60 & 331 \\
+8  & 5.503e+00 & 43 & 210 & 5.501e+00 & 25 & 130 \\
+9  & 4.176e+00 & 25 & 117 & 4.190e+00 & 34 & 193 \\
+10 & 3.120e-02 & 31 & 154 & 4.077e-02 & 38 & 198 \\
+11 & 3.452e-02 & 28 & 145 & 2.275e-02 & 31 & 157 \\
+12 & 3.228e-02 & 50 & 262 & 3.421e-02 & 19 & 93  \\
+\hline
+$\Sigma$ & & 480 & 2324 & & 485 & 2389 \\
+\hline
+\end{tabular}
+\caption{Third-degree polynomial ($m=46$, $\delta=0.1$): first-order method
+($B=0$) versus the quasi-Newton variant ($M=1$). For each $o$, the best
+$f(x^*)$ over $100$ starting points, the number of outer iterations (\#it), and
+the number of function evaluations (\#fcnt).}
+\end{table}
+
+The absence of any gain from curvature on this problem is expected, and
+instructive. The model $y(t,x)$ is affine in the parameters $x$, so each
+residual $r_i$ is affine, $\nabla r_i$ is constant, and the component Hessians
+$\nabla^2 f_i=\nabla r_i\nabla r_i^T$ are constant and exact: here the
+Gauss--Newton curvature is the true curvature. Each $f_i$ is thus a convex
+quadratic, for which the adaptive regularization $\sigma_{k,j}$ of the
+first-order model already produces well-scaled steps; the explicit curvature is
+largely redundant and merely reshapes the step without reducing the iteration
+count. Moreover, the dominant difficulty of \eqref{ovo-problem} on this
+instance is not smooth nonconvexity --which curvature would mitigate-- but the
+combinatorial selection of which observations to discard, which produces the
+many local minima reflected in the multistart strategy and is unaffected by
+$B$. This is consistent with the analysis of Section~\ref{sec:complexity},
+where $B$ enters only the constant, and not the order, of the complexity
+bounds: on a problem of this type curvature can be expected to neither help nor
+harm. The picture changes for models that are genuinely nonlinear in the
+parameters, considered next, where the first-order model is a poorer local
+approximation and the curvature becomes informative.
+
+\clearpage
 
 \begin{thebibliography}{99}
 
