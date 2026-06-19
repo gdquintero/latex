@@ -1,8 +1,8 @@
-This is LuaHBTeX, Version 1.18.0 (TeX Live 2024)  (format=lualatex 2024.12.13)  17 JUN 2026 09:46
+This is LuaHBTeX, Version 1.18.0 (TeX Live 2024)  (format=lualatex 2024.12.13)  17 JUN 2026 16:03
  restricted system commands enabled.
  file:line:error style messages enabled.
-**/Users/gustavoquintero/github/latex/uniatlantico/eimat/eimat_2026_poster/poster.tex
-(/Users/gustavoquintero/github/latex/uniatlantico/eimat/eimat_2026_poster/poster.tex
+**/Users/gustavoquintero/github/latex/uniatlantico/eimat/poster/poster
+(/Users/gustavoquintero/github/latex/uniatlantico/eimat/poster/poster.tex
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
 Lua module: luaotfload 2024-02-14 3.28 Lua based OpenType font support
@@ -1407,14 +1407,14 @@ Package rerunfilecheck Info: File `poster.out' has not changed.
 )
 
 Here is how much of LuaTeX's memory you used:
- 42080 strings out of 476447
+ 42079 strings out of 476447
  305230,1977958 words of node,token memory allocated
  81028 words of node memory still in use:
    1076 hlist, 161 vlist, 127 rule, 339 disc, 124 local_par, 167 math, 2112 glue, 857 kern, 442 penalty, 4662 glyph, 1778 attribute, 83 glue_spec, 1778 attribute_list, 36 write, 144 pdf_literal, 2 pdf_start_link, 2 pdf_end_link, 18 pdf_dest, 2 pdf_action, 406 pdf_colorstack, 14 pdf_setmatrix, 14 pdf_save, 14 pdf_restore nodes
    avail lists: 2:450,3:2013,4:1365,5:2535,6:379,7:20323,8:62,9:3988,10:20,11:1029
  62887 multiletter control sequences out of 65536+600000
  222 fonts using 27051455 bytes
- 128i,22n,128p,799b,1572s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 128i,22n,128p,784b,1572s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/truetype/typoland/lato/Lato-LightItalic.ttf>{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}</usr/local/texlive/2024/texmf-dist/fonts/truetype/typoland/lato/Lato-Regular.ttf></usr/local/texlive/2024/texmf-dist/fonts/opentype/public/lm/lmroman7-regular.otf></usr/local/texlive/2024/texmf-dist/fonts/truetype/typoland/lato/Lato-Light.ttf></usr/local/texlive/2024/texmf-dist/fonts/opentype/impallari/raleway/Raleway-Regular.otf></usr/local/texlive/2024/texmf-dist/fonts/opentype/impallari/raleway/Raleway-Bold.otf></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmbx8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmmi12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmmi5.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmmi6.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmmib10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmr12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmr17.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmr5.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmr6.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmr7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmr8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
 Output written on poster.pdf (1 page, 1594088 bytes).
 
